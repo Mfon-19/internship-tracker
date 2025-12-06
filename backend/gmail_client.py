@@ -60,6 +60,8 @@ class GmailClient:
 
     def decode_history_notification(self, data_b64: str) -> Dict:
         import base64
+        import logging
 
         payload = base64.b64decode(data_b64).decode("utf-8")
+        logging.info("Decoded Pub/Sub payload: %r", payload)
         return json.loads(payload)
