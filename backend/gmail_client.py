@@ -23,12 +23,15 @@ class GmailClient:
         elif os.path.exists(self.credentials_path):
             raise RuntimeError("OAuth flow required to create token.json; run locally to authorize.")
         else:
-            raise FileNotFoundError("Missing Gmail OAuth credentials. Provide credentials.json/token.json")
+            raise FileNotFoundError("Missing Gmail OAuth credentials.")
 
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
-            with open(self.token_path, "w") as token_file:
-                token_file.write(creds.to_json())
+            try:
+                with open(self.token_path, "w") as token_file:
+                    token_file.write(creds.to_json())
+            except OSError:
+                pass
 
         return build("gmail", "v1", credentials=creds, cache_discovery=False)
 
