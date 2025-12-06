@@ -2,8 +2,10 @@ import { createSupabaseServerClient } from "@/lib/supabaseServer";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
+  console.error("DEBUG: Auth Callback Route Hit", request.url);
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
+  console.error("DEBUG: Auth Code Present?", !!code);
   const supabase = createSupabaseServerClient();
 
   if (code) {
