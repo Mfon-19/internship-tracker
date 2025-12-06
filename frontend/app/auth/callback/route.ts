@@ -7,7 +7,16 @@ export async function GET(request: NextRequest) {
   const supabase = createSupabaseServerClient();
 
   if (code) {
-    await supabase.auth.exchangeCodeForSession(code);
+    try {
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) {
+        console.error("Auth error:", error);
+        return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error.message)}`, request.url));
+      }
+    } catch (err) {
+      console.error("Callback error:", err);
+      return NextResponse.redirect(new URL("/login?error=server_error", request.url));
+    }
   }
 
   return NextResponse.redirect(new URL("/", request.url));
