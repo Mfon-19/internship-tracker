@@ -49,10 +49,10 @@ class GmailClient:
         page_token = None
         while True:
             request = (
-                self.service.users()
+                service.users()
                 .history()
                 .list(
-                    userId=self.user_email,
+                    userId=user_email,
                     startHistoryId=start_history_id,
                     historyTypes=["messageAdded"],
                     labelId="INBOX",
