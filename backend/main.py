@@ -118,7 +118,8 @@ def pubsub_push(payload: PubSubPush) -> Dict[str, str]:
         decoded = gmail_client.decode_history_notification(data_b64)
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("Failed to decode Pub/Sub message. Raw data: %s", data_b64)
-        raise HTTPException(status_code=400, detail="Invalid message data") from exc
+        # Return 200 to acknowledge the message so it doesn't get retried (since it's garbage)
+        return {"status": "ignored_invalid_payload"}
 
     history_id = decoded.get("historyId")
     email_address = decoded.get("emailAddress")
