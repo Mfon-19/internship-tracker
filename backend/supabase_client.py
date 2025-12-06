@@ -54,11 +54,10 @@ class SupabaseClient:
             self.client.table("gmail_state")
             .select("last_history_id")
             .eq("id", email)
-            .maybe_single()
             .execute()
         )
-        if response.data and response.data.get("last_history_id"):
-            return str(response.data["last_history_id"])
+        if response.data and len(response.data) > 0:
+            return str(response.data[0]["last_history_id"])
         return None
 
     def set_last_history_id(self, email: str, history_id: str) -> None:
