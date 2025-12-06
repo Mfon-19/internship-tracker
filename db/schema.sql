@@ -31,3 +31,12 @@ create table if not exists gmail_state (
 insert into gmail_state (id, last_history_id)
 values ('singleton', null)
 on conflict (id) do nothing;
+
+create table if not exists gmail_connections (
+    user_id uuid references auth.users(id) not null,
+    email text not null,
+    provider_access_token text,
+    provider_refresh_token text,
+    provider_token_expires_at timestamptz,
+    primary key (user_id, email)
+);

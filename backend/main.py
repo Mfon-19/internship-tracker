@@ -103,7 +103,7 @@ def register_watch(request: WatchRequest) -> Dict[str, Any]:
         response = gmail_client.watch(creds, topic, label_ids=["INBOX"])
         return response
     except Exception as exc:  # pylint: disable=broad-except
-        logger.exception("Failed to register Gmail watch for %s", request.email)
+        logger.exception("Failed to register Gmail watch for %s. Error: %s", request.email, str(exc))
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
