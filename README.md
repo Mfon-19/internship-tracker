@@ -43,9 +43,3 @@ Unlike traditional apps that poll Gmail every few minutes (wasting resources and
 - **Backend**: Python 3.11, FastAPI, Uvicorn, Google API Client.
 - **Database**: PostgreSQL (Supabase) with `pgcrypto` extension.
 - **Infrastructure**: Docker, Google Cloud Run, Google Pub/Sub.
-GMAIL_WATCH_TOPIC="projects/your-project/topics/your-topic"
-GMAIL_USER_EMAIL="me" # Usually 'me' for the authenticated user
-
-# Frontend Config
-NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="your-anon-key"
