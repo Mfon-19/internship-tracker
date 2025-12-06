@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from classification import (
@@ -30,44 +30,22 @@ class PubSubPush(BaseModel):
     subscription: Optional[str] = None
 
 
-class WatchRequest(BaseModel):
-    email: str
-
-
 @app.get("/healthz")
 def health() -> Dict[str, str]:
     return {"status": "ok"}
 
 
 @app.post("/gmail/watch")
-def register_watch(watch: WatchRequest, authorization: str = Header(default=None)) -> Dict[str, Any]:
+def register_watch() -> Dict[str, Any]:
     topic = os.getenv("GMAIL_WATCH_TOPIC")
     if not topic:
         raise HTTPException(status_code=500, detail="GMAIL_WATCH_TOPIC not set")
-
-    user_id = supabase_client.get_user_id_from_jwt(authorization)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-
-    connection = supabase_client.get_connection_by_email(watch.email)
-    if not connection or connection.get("user_id") != user_id:
-        raise HTTPException(status_code=404, detail="Connection not found for user")
-
-    creds, refreshed = gmail_client.credentials_from_connection(connection)
-    service = gmail_client.build_service(creds)
     try:
-        response = gmail_client.watch(service, topic, label_ids=["INBOX"], user_email=watch.email)
+        response = gmail_client.watch(topic, label_ids=["INBOX"])
+        return response
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("Failed to register Gmail watch")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
-
-    expiration = gmail_client.parse_expiration_ms(response.get("expiration"))
-    supabase_client.update_connection_history(connection["id"], response.get("historyId"), expiration)
-    if refreshed:
-        supabase_client.update_connection_tokens(
-            connection["id"], creds.token, creds.expiry.isoformat() if creds.expiry else None
-        )
-    return response
 
 
 @app.post("/pubsub/push")
@@ -85,37 +63,28 @@ def pubsub_push(payload: PubSubPush) -> Dict[str, str]:
 
     history_id = decoded.get("historyId")
     email_address = decoded.get("emailAddress")
-    if not history_id or not email_address:
+    if not history_id:
         return {"status": "no_history"}
 
-    connection = supabase_client.get_connection_by_email(email_address)
-    if not connection:
-        logger.warning("No gmail_connection found for %s", email_address)
-        return {"status": "unknown_user"}
+    logger.info("Processing history for %s starting at %s", email_address, history_id)
+    last_history = supabase_client.get_last_history_id()
+    start_history_id = last_history or history_id
 
-    creds, refreshed = gmail_client.credentials_from_connection(connection)
-    service = gmail_client.build_service(creds)
-
-    start_history_id = connection.get("history_id") or history_id
-    history_entries = gmail_client.list_history(service, start_history_id, user_email=email_address)
+    history_entries = gmail_client.list_history(start_history_id)
     processed_history_id = start_history_id
     for entry in history_entries:
         processed_history_id = entry.get("id", processed_history_id)
         messages = _extract_messages_from_history(entry)
         for message_id in messages:
-            message = gmail_client.get_message(service, message_id, user_email=email_address)
+            message = gmail_client.get_message(message_id)
             if not message:
                 continue
             if not is_application_email(message):
                 continue
             record = _build_application_record(message)
-            supabase_client.upsert_application(connection["user_id"], record)
+            supabase_client.upsert_application(record)
 
-    supabase_client.update_connection_history(connection["id"], str(processed_history_id), connection.get("watch_expiration"))
-    if refreshed:
-        supabase_client.update_connection_tokens(
-            connection["id"], creds.token, creds.expiry.isoformat() if creds.expiry else None
-        )
+    supabase_client.set_last_history_id(str(processed_history_id))
     return {"status": "ok"}
 
 

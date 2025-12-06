@@ -1,16 +1,13 @@
 import "server-only";
-import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be provided");
+if (!url || !serviceKey) {
+  throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be provided");
 }
 
-export function createSupabaseServerClient() {
-  return createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies,
-  });
-}
+export const supabaseServer = createClient(url, serviceKey, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
