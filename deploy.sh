@@ -34,6 +34,13 @@ echo -e "${BLUE}Deploying Backend to Google Cloud Run...${NC}"
 cd backend
 gcloud builds submit --tag gcr.io/internship-tracker-480402/internship-tracker-backend
 
+echo -e "${BLUE}Updating Cloud Run Service...${NC}"
+gcloud run deploy internship-tracker-backend \
+  --image gcr.io/internship-tracker-480402/internship-tracker-backend \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated
+
 echo -e "${GREEN}=== Deployment Commands Initiated ===${NC}"
 echo -e "Frontend: Check Vercel dashboard for build status."
 echo -e "Backend:  Cloud Run deployment submitted."
