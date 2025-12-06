@@ -16,3 +16,8 @@ venv
 
 # Mac / editor
 .DS_Store
+
+# Auth & Local Config
+auth_init.py
+credentials.json
+token.json
