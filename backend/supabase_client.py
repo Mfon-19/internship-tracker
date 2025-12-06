@@ -15,6 +15,18 @@ class SupabaseClient:
     def upsert_application(self, application: Dict[str, Any]) -> None:
         self.client.table("applications").upsert(application, on_conflict="gmail_id").execute()
 
+    def get_user_id(self, email: str) -> Optional[str]:
+        response = (
+            self.client.table("gmail_connections")
+            .select("user_id")
+            .eq("email", email)
+            .maybe_single()
+            .execute()
+        )
+        if response.data:
+            return response.data.get("user_id")
+        return None
+
     def get_gmail_credentials(self, email: str) -> Optional[Dict[str, Any]]:
         response = (
             self.client.table("gmail_connections")

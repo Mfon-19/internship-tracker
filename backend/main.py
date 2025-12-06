@@ -139,6 +139,11 @@ def pubsub_push(payload: PubSubPush) -> Dict[str, str]:
         logger.error("Could not find credentials for %s", email_address)
         return {"status": "ignored_no_creds"}
 
+    user_id = supabase_client.get_user_id(email_address)
+    if not user_id:
+         logger.error("Could not find user_id for %s", email_address)
+         return {"status": "ignored_no_user"}
+
     last_history = supabase_client.get_last_history_id(email_address)
     start_history_id = last_history or history_id
 
@@ -160,13 +165,7 @@ def pubsub_push(payload: PubSubPush) -> Dict[str, str]:
             if not is_application_email(message):
                 continue
             record = _build_application_record(message)
-            # Ensure the record is associated with the user/email if needed? 
-            # The schema doesn't have a 'user_email' link in 'applications' table, 
-            # but 'from_email' is the sender. 
-            # Ideally we should store which user received this application.
-            # But the current schema doesn't seem to enforce user ownership of applications explicitly 
-            # other than maybe implicit logic. 
-            # I will proceed as is.
+            record["user_id"] = user_id
             supabase_client.upsert_application(record)
 
     supabase_client.set_last_history_id(email_address, str(processed_history_id))

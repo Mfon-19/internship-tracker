@@ -1,5 +1,5 @@
 import { ApplicationTable, type Application } from "@/components/ApplicationTable";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { createSupabaseServerClient } from "@/lib/supabaseServer";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -16,7 +16,8 @@ export default async function Page({ searchParams }: { searchParams: SearchParam
   const stage = stageParam && stages.includes(stageParam as any) ? stageParam : "all";
   const queryText = queryParam?.trim();
 
-  let query = supabaseServer
+  const supabase = createSupabaseServerClient();
+  let query = supabase
     .from("applications")
     .select("id, company, role, stage, email_date, source, subject")
     .order("email_date", { ascending: false, nullsFirst: false });
