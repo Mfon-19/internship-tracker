@@ -1,4 +1,5 @@
 import { ApplicationTable, type Application } from "@/components/ApplicationTable";
+import { ConnectGmailButton } from "@/components/ConnectGmailButton";
 import { createSupabaseServerClient } from "@/lib/supabaseServer";
 import { Metadata } from "next";
 
@@ -17,6 +18,20 @@ export default async function Page({ searchParams }: { searchParams: SearchParam
   const queryText = queryParam?.trim();
 
   const supabase = createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let isConnected = false;
+  if (user) {
+    const { data } = await supabase
+      .from("gmail_connections")
+      .select("email")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    isConnected = !!data;
+  }
+
   let query = supabase
     .from("applications")
     .select("id, company, role, stage, email_date, source, subject")
@@ -42,6 +57,11 @@ export default async function Page({ searchParams }: { searchParams: SearchParam
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-slate-900">Your Applications</h1>
+        <ConnectGmailButton isConnected={isConnected} />
+      </div>
+
       <section className="grid gap-4 md:grid-cols-3">
         {stages.slice(1).map((s) => (
           <div key={s} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
