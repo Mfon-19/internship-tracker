@@ -20,11 +20,10 @@ class SupabaseClient:
             self.client.table("gmail_connections")
             .select("user_id")
             .eq("email", email)
-            .maybe_single()
             .execute()
         )
-        if response.data:
-            return response.data.get("user_id")
+        if response.data and len(response.data) > 0:
+            return response.data[0].get("user_id")
         return None
 
     def get_gmail_credentials(self, email: str) -> Optional[Dict[str, Any]]:
@@ -32,10 +31,11 @@ class SupabaseClient:
             self.client.table("gmail_connections")
             .select("provider_access_token, provider_refresh_token, provider_token_expires_at")
             .eq("email", email)
-            .maybe_single()
             .execute()
         )
-        return response.data
+        if response.data and len(response.data) > 0:
+            return response.data[0]
+        return None
 
     def update_gmail_credentials(self, email: str, tokens: Dict[str, Any]) -> None:
         # Map Google tokens to DB columns
