@@ -29,8 +29,10 @@ export function createSupabaseServerClient() {
       },
       set(name: string, value: string, options: CookieOptions) {
         try {
+          console.log(`SupabaseServer: Setting cookie ${name}`);
           cookieStore.set({ name, value, ...options })
         } catch (error) {
+          console.error(`SupabaseServer: Error setting cookie ${name}`, error);
           // The `set` method was called from a Server Component.
           // This can be ignored if you have middleware refreshing
           // user sessions.
